@@ -1,0 +1,22 @@
+# Data files
+*.csv
+*.xlsx
+*.db
+feature_store.db
+
+# Virtual Environments
+venv/
+.env
+
+# Models (Optional, see below)
+*.cbm
+
+# Python cache and IDE files
+__pycache__/
+catboost_info/
+.idea/
+.vscode/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/

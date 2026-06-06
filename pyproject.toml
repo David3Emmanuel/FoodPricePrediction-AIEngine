@@ -1,0 +1,14 @@
+[project]
+name = "foodpriceprediction-aiengine"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "catboost>=1.2.10",
+    "fastapi>=0.136.3",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "pydantic>=2.13.4",
+    "requests>=2.34.2",
+    "shap>=0.52.0",
+    "streamlit>=1.58.0",
+]

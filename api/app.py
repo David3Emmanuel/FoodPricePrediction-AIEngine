@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pandas as pd
 import sqlite3
-import numpy as np
 
 import agri_price.predictor
 
@@ -51,7 +50,11 @@ async def predict_price(req: PredictionRequest):
             "Price_Change_1Y_Percent": df_context['Price_Change_1Y_Percent'].iloc[0],
             "Avg_Temperature_C": df_context['Avg_Temperature_C'].iloc[0],
             "Precipitation_mm": df_context['Precipitation_mm'].iloc[0],
+            "Solar_Radiation_MJ": df_context['Solar_Radiation_MJ'].iloc[0],
             "General_Inflation_Rate_Percent": df_context['General_Inflation_Rate_Percent'].iloc[0],
+            "Weekly_Econ_Sentiment_Score": df_context.get('Weekly_Econ_Sentiment_Score', pd.Series([0.0])).iloc[0],
+            "Exchange_Rate_NGN_USD": df_context.get('Exchange_Rate_NGN_USD', pd.Series([0.0])).iloc[0],
+            "Diesel_Price_NGN": df_context.get('Diesel_Price_NGN', pd.Series([0.0])).iloc[0],
             "Month_Num": df_context['Month_Num'].iloc[0]
         }
         

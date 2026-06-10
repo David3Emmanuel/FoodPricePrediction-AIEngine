@@ -40,6 +40,20 @@ def load_data(path: str, table_name: str = "historical_data") -> tuple[pd.DataFr
 
     return X, y, cat_features
 
+def save_to_db(df: pd.DataFrame, db_path: str, table_name: str, if_exists: str = 'replace'):
+    """Saves a DataFrame to a SQLite database."""
+    conn = sqlite3.connect(db_path)
+    df.to_sql(table_name, conn, if_exists=if_exists, index=False)
+    conn.close()
+    print(f"Successfully saved {len(df)} rows to {table_name} in {db_path}.")
+
+def load_from_db(db_path: str, table_name: str) -> pd.DataFrame:
+    """Loads a DataFrame from a SQLite database."""
+    conn = sqlite3.connect(db_path)
+    df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+    conn.close()
+    return df
+
 def build_combined_dataset(
     news_path: str,
     insecurity_path: str,

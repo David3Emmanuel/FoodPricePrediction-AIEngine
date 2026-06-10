@@ -58,7 +58,7 @@ Certain features include historical "lags" or "deltas" to capture trends. These 
 | **Market Prices** | Market Surveys (Excel) | Daily | Reverse Geocoding (Lat/Lon to State) |
 | **News Sentiment** | Web/News API (Excel) | Daily | **FinBERT** Sentiment Classification |
 | **Insecurity** | ACLED (API/Excel) | Monthly/Weekly | Sum aggregation for events/fatalities |
-| **Weather** | NASA POWER (API) | Daily | Mean/Sum aggregation by State |
+| **Weather** | Open Meteo (API) | Daily | Mean/Sum aggregation by State |
 | **Inflation** | National Bureau of Stats (Excel) | Monthly | Mean interpolation to weekly |
 | **Diesel Price** | National Bureau of Stats (Excel) | Monthly | Mean interpolation by State |
 | **Crude Oil** | Global Markets (Excel) | Daily | Mean aggregation |

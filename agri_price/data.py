@@ -5,9 +5,16 @@ from typing import Any, Optional
 from agri_price import utils
 from agri_price import news
 
-def load_data(path: str) -> tuple[pd.DataFrame, pd.Series, list[str]]:
-    # Load the latest dataset
-    df = pd.read_csv(path)
+import sqlite3
+
+def load_data(path: str, table_name: str = "historical_data") -> tuple[pd.DataFrame, pd.Series, list[str]]:
+    # Load the latest dataset (from CSV or SQL)
+    if path.endswith('.db'):
+        conn = sqlite3.connect(path)
+        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+        conn.close()
+    else:
+        df = pd.read_csv(path)
 
     # 1. DYNAMICALLY auto-detect all text/categorical columns! 
     # This grabs 'state', 'food_item', and any future text columns you add.
@@ -19,7 +26,14 @@ def load_data(path: str) -> tuple[pd.DataFrame, pd.Series, list[str]]:
             df[col] = df[col].astype(str).str.lower().str.strip()
 
     # Use our precise 1-Month target
-    target_col = 'Target_Price_Change_1M_Percent'
+    # Check if we have the standardized name or the CSV variant
+    if 'Target_Price_Change_1M_Percent' in df.columns:
+        target_col = 'Target_Price_Change_1M_Percent'
+    elif 'TARGET_Price_Change_1M' in df.columns:
+        target_col = 'TARGET_Price_Change_1M'
+    else:
+        # Fallback or error
+        target_col = [col for col in df.columns if 'TARGET' in col.upper()][0]
 
     X = df.drop(columns=['Year', 'Month', 'Week', target_col], errors='ignore')
     y = df[target_col]

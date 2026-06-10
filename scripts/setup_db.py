@@ -26,21 +26,42 @@ def setup_db():
         )
     ''')
     
-    # Inserting MOCK data (You'll need to get real data)
-    cursor.execute('''
-        INSERT OR REPLACE INTO current_market_state 
-        (id, General_Inflation_Rate_Percent, Price_Change_1M_Percent, Price_Change_3M_Percent, Price_Change_6M_Percent, Price_Change_1Y_Percent, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
-        VALUES (1, 32.7, 5.2, -16.19, 12.4, 135.17, 25.93, 29.17, 15.2, 9.0, 'Dry')
-    ''')
-    
     # 2. Port CSV to historical_data table
     if os.path.exists(csv_path):
         print(f"Porting {csv_path} to historical_data table...")
         df_historical = pd.read_csv(csv_path)
         df_historical.to_sql('historical_data', conn, if_exists='replace', index=False)
         print("Successfully ported CSV to SQLite.")
+        
+        # 3. Pull the most recent record to update current_market_state
+        print("Updating current_market_state with the latest historical data...")
+        # Get the latest row (assuming last row is most recent)
+        latest_row = df_historical.iloc[-1]
+        
+        month_num = float(latest_row.get('Month_Num', 1.0))
+        # Derive Season (Nigeria context: Wet season is roughly April-October)
+        season = 'Wet' if 4 <= month_num <= 10 else 'Dry'
+        
+        # Mapping CSV columns to current_market_state schema
+        cursor.execute('''
+            INSERT OR REPLACE INTO current_market_state 
+            (id, General_Inflation_Rate_Percent, Price_Change_1M_Percent, Price_Change_3M_Percent, Price_Change_6M_Percent, Price_Change_1Y_Percent, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            1, 
+            float(latest_row.get('General_Inflation_Rate', 32.7)),
+            float(latest_row.get('Price_Change_1M', 0.0)),
+            float(latest_row.get('Price_Change_3M', 0.0)),
+            float(latest_row.get('Price_Change_6M', 0.0)),
+            float(latest_row.get('Price_Change_1Y', 0.0)),
+            float(latest_row.get('Avg_Temperature_C', 25.0)),
+            float(latest_row.get('Precipitation_mm', 0.0)),
+            float(latest_row.get('Solar_Radiation_MJ', 15.0)),
+            month_num,
+            season
+        ))
     else:
-        print(f"Warning: {csv_path} not found. Skipping historical data port.")
+        print(f"Error: {csv_path} not found. Cannot initialize Feature Store without data.")
     
     conn.commit()
     conn.close()

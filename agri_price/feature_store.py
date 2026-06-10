@@ -1,20 +1,39 @@
-import sqlite3
-import requests
-from datetime import datetime
 import logging
+import sqlite3
+from argparse import ArgumentParser
+from datetime import datetime
 
-# 1. Setup Logging (Crucial for Cron Jobs so we know if it failedearly)
+import requests
+
+from .state_coords import state_coords
+
+# 1. Setup Logging (Crucial for Cron Jobs so we know if it failed early)
 logging.basicConfig(
     filename='feature_store_updates.log', 
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def fetch_live_weather():
-    """Fetches real, live weather data for Kano using the free Open-Meteo API."""
+DEFAULT_STATE = 'Lagos'
+
+
+def get_state_coordinates(state: str) -> tuple[float, float]:
+    if state not in state_coords:
+        logging.warning("Unknown state '%s'; falling back to %s.", state, DEFAULT_STATE)
+        state = DEFAULT_STATE
+
+    return state_coords[state]
+
+
+def fetch_live_weather(state: str = DEFAULT_STATE):
+    """Fetches real, live weather data for a Nigerian state using the free Open-Meteo API."""
     try:
-        # Coordinates for Kano, Nigeria
-        url = "https://api.open-meteo.com/v1/forecast?latitude=12.0022&longitude=8.5920&current=temperature_2m,precipitation&timezone=Africa%2FLagos"
+        lat, lon = get_state_coordinates(state)
+        url = (
+            "https://api.open-meteo.com/v1/forecast?"
+            f"latitude={lat}&longitude={lon}"
+            "&current=temperature_2m,precipitation&timezone=Africa%2FLagos"
+        )
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -56,11 +75,11 @@ def fetch_market_price_lags():
         logging.error(f"Market DB query failed: {e}")
         return None
 
-def main():
+def main(state: str = DEFAULT_STATE):
     logging.info("Starting nightly feature store update...")
     
     # 1. Gather all live data
-    weather = fetch_live_weather()
+    weather = fetch_live_weather(state)
     macro = fetch_macro_economics()
     market = fetch_market_price_lags()
     current_month = datetime.now().month
@@ -107,4 +126,7 @@ def main():
     print("Feature store updated successfully! Check feature_store_updates.log for details.")
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser(description='Update the feature store for a specific state.')
+    parser.add_argument('--state', default=DEFAULT_STATE, help='State to fetch weather for')
+    args = parser.parse_args()
+    main(args.state)

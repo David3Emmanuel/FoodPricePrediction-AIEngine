@@ -1,12 +1,9 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "foodpriceprediction-aiengine"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "agri-price",
     "catboost>=1.2.10",
     "fastapi>=0.136.3",
     "numpy>=2.4.6",
@@ -23,5 +20,10 @@ dependencies = [
     "uvicorn>=0.48.0",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ["agri_price"]
+[tool.uv.workspace]
+members = [
+    "agri_price",
+]
+
+[tool.uv.sources]
+agri-price = { workspace = true }

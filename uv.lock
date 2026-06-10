@@ -12,6 +12,17 @@ resolution-markers = [
     "(python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')",
 ]
 
+[manifest]
+members = [
+    "agri-price",
+    "foodpriceprediction-aiengine",
+]
+
+[[package]]
+name = "agri-price"
+version = "0.1.0"
+source = { editable = "agri_price" }
+
 [[package]]
 name = "altair"
 version = "6.1.0"
@@ -404,8 +415,9 @@ wheels = [
 [[package]]
 name = "foodpriceprediction-aiengine"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
+    { name = "agri-price" },
     { name = "catboost" },
     { name = "fastapi" },
     { name = "numpy" },
@@ -424,6 +436,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agri-price", editable = "agri_price" },
     { name = "catboost", specifier = ">=1.2.10" },
     { name = "fastapi", specifier = ">=0.136.3" },
     { name = "numpy", specifier = ">=2.4.6" },

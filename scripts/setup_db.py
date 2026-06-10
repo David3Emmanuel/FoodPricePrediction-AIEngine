@@ -1,7 +1,7 @@
 import sqlite3
 
 def setup_db():
-    conn = sqlite3.connect('feature_store.db')
+    conn = sqlite3.connect('data/feature_store.db')
     cursor = conn.cursor()
     
     # Create the table

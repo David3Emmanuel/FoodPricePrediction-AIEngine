@@ -33,7 +33,7 @@ async def predict_price(req: PredictionRequest):
     try:
         # Step A: Pull the "State of the World" from the local Feature Store
         try:
-            conn = sqlite3.connect('feature_store.db')
+            conn = sqlite3.connect('data/feature_store.db')
             df_context = pd.read_sql_query("SELECT * FROM current_market_state WHERE id=1", conn)
             conn.close()
         except Exception as db_err:

@@ -10,10 +10,7 @@ import agri_price.predictor
 # 1. INITIALIZE SERVER & LOAD AI INTO RAM
 # ==========================================
 app = FastAPI(title="AgriPrice Prediction API", version="1.0")
-
-print("Loading CatBoost Model...")
 model, explainer = agri_price.predictor.load_model("models/agri_price_model.cbm")
-print("Model loaded and ready!")
 
 # ==========================================
 # 2. DEFINE THE FRONTEND PAYLOAD

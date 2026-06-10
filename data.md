@@ -15,39 +15,39 @@ Certain features include historical "lags" or "deltas" to capture trends. These 
 ## 1. Feature Definitions
 
 ### Categorical Features (User/Dashboard Inputs)
-- `food_item`: Specific crop (e.g., "maize", "rice").
-- `item_type`: Sub-type (e.g., "white", "local").
-- `category`: Broad group (e.g., "cereals", "vegetables").
-- `vendor_type`: Level of trade ("retail", "wholesale").
-- `state`: Geographic region (mapped via reverse geocoding).
+- `Food_Item`: Specific crop (e.g., "maize", "rice").
+- `Item_Type`: Sub-type (e.g., "white", "local").
+- `Category`: Broad group (e.g., "cereals", "vegetables").
+- `Vendor_Type`: Level of trade ("retail", "wholesale").
+- `State`: Geographic region (mapped via reverse geocoding).
 
 ### Market & Price Features
-- `price` (plus lag): The base unit price of the commodity.
-- `target_price_change_1m`: The prediction target (% change in price 1 month into the future).
+- `Price_NGN` (plus lag): The base unit price of the commodity.
+- `Target_Price_Change_1M_Percent`: The prediction target (% change in price 1 month into the future).
 
 ### Macroeconomic Features
-- `general_inflation_rate` (plus lag): Headline inflation index.
-- `food_inflation_rate` (plus lag): Specific food inflation index.
-- `exchange_rate` (plus lag): NGN/USD weighted average rate.
-- `diesel_price` (plus lag): Fuel/transportation cost index.
-- `crude_oil_price` (plus lag): Global oil market price.
+- `General_Inflation_Rate_Percent` (plus lag): Headline inflation index.
+- `Food_Inflation_Rate_Percent` (plus lag): Specific food inflation index.
+- `Exchange_Rate_NGN_USD` (plus lag): NGN/USD weighted average rate.
+- `Diesel_Price_NGN` (plus lag): Fuel/transportation cost index.
+- `Crude_Oil_Price_USD` (plus lag): Global oil market price.
 
 ### Environmental & Narrative
-- `avg_temperature_c`: Average weekly temperature.
-- `precipitation_mm`: Total weekly rainfall.
-- `solar_radiation_mj`: Sunlight exposure/solar radiation.
-- `weekly_econ_sentiment_score`: Derived from news headlines via FinBERT.
+- `Avg_Temperature_C`: Average weekly temperature.
+- `Precipitation_mm`: Total weekly rainfall.
+- `Solar_Radiation_MJ`: Sunlight exposure/solar radiation.
+- `Weekly_Econ_Sentiment_Score`: Derived from news headlines via FinBERT.
 
 ### Conflict & Stability
-- `regional_events_count` (plus lag): Number of insecurity events in the state (ACLED).
-- `regional_fatalities_count` (plus lag): Total fatalities from insecurity events.
+- `Regional_Events_Count` (plus lag): Number of insecurity events in the state (ACLED).
+- `Regional_Fatalities_Count` (plus lag): Total fatalities from insecurity events.
 
 ### Temporal & Contextual
-- `year`: Calendar year.
-- `month`: Calendar month.
-- `week`: ISO week number (%W).
-- `month_num`: 1–12 numeric representation.
-- `seasonality_month`: Sine/Cosine or categorical indicator of harvest/seasonal cycles.
+- `Year`: Calendar year.
+- `Month`: Calendar month.
+- `Week`: ISO week number (%W).
+- `Month_Num`: 1–12 numeric representation.
+- `Seasonality_Month`: Sine/Cosine or categorical indicator of harvest/seasonal cycles.
 
 ---
 
@@ -57,7 +57,7 @@ Certain features include historical "lags" or "deltas" to capture trends. These 
 | :--- | :--- | :--- | :--- |
 | **Market Prices** | Market Surveys (Excel) | Daily | Reverse Geocoding (Lat/Lon to State) |
 | **News Sentiment** | Web/News API (Excel) | Daily | **FinBERT** Sentiment Classification |
-| **Insecurity** | ACLED (Excel) | Monthly | Sum aggregation for events/fatalities |
+| **Insecurity** | ACLED (API/Excel) | Monthly/Weekly | Sum aggregation for events/fatalities |
 | **Weather** | NASA POWER (API) | Daily | Mean/Sum aggregation by State |
 | **Inflation** | National Bureau of Stats (Excel) | Monthly | Mean interpolation to weekly |
 | **Diesel Price** | National Bureau of Stats (Excel) | Monthly | Mean interpolation by State |

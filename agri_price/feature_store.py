@@ -59,7 +59,7 @@ def fetch_macro_economics():
     """
     try:
         # Mocking the live API call
-        return {"General_Inflation_Rate": 33.20}
+        return {"General_Inflation_Rate_Percent": 33.20}
     except Exception as e:
         logging.error(f"Macro API failed: {e}")
         return None
@@ -72,10 +72,10 @@ def fetch_market_price_lags():
     try:
         # Mocking the calculation from your raw vendor database
         return {
-            "Price_Change_1M": 5.2,
-            "Price_Change_3M": -16.19,
-            "Price_Change_6M": 12.4,
-            "Price_Change_1Y": 135.17
+            "Price_Change_1M_Percent": 5.2,
+            "Price_Change_3M_Percent": -16.19,
+            "Price_Change_6M_Percent": 12.4,
+            "Price_Change_1Y_Percent": 135.17
         }
     except Exception as e:
         logging.error(f"Market DB query failed: {e}")
@@ -116,11 +116,11 @@ def main(state: str = DEFAULT_STATE):
     # Format: id, Inflation, 1M, 3M, 6M, 1Y, Temp, Precip, Solar, Month, Season
     updated_values = (
         1,
-        macro['General_Inflation_Rate'] if macro else yesterday_data[1],
-        market['Price_Change_1M'] if market else yesterday_data[2],
-        market['Price_Change_3M'] if market else yesterday_data[3],
-        market['Price_Change_6M'] if market else yesterday_data[4],
-        market['Price_Change_1Y'] if market else yesterday_data[5],
+        macro['General_Inflation_Rate_Percent'] if macro else yesterday_data[1],
+        market['Price_Change_1M_Percent'] if market else yesterday_data[2],
+        market['Price_Change_3M_Percent'] if market else yesterday_data[3],
+        market['Price_Change_6M_Percent'] if market else yesterday_data[4],
+        market['Price_Change_1Y_Percent'] if market else yesterday_data[5],
         weather['Avg_Temperature_C'] if weather else yesterday_data[6],
         weather['Precipitation_mm'] if weather else yesterday_data[7],
         weather['Solar_Radiation_MJ'] if weather else yesterday_data[8],
@@ -131,7 +131,7 @@ def main(state: str = DEFAULT_STATE):
     # 5. Push to Database
     cursor.execute('''
         INSERT OR REPLACE INTO current_market_state 
-        (id, General_Inflation_Rate, Price_Change_1M, Price_Change_3M, Price_Change_6M, Price_Change_1Y, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
+        (id, General_Inflation_Rate_Percent, Price_Change_1M_Percent, Price_Change_3M_Percent, Price_Change_6M_Percent, Price_Change_1Y_Percent, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', updated_values)
 

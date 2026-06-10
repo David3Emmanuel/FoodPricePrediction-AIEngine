@@ -17,10 +17,10 @@ model, explainer = agri_price.predictor.load_model("models/agri_price_model.cbm"
 # ==========================================
 # The frontend only sends what the user clicked on the dashboard.
 class PredictionRequest(BaseModel):
-    food_item: str
-    item_type: str
-    category: str
-    vendor_type: str
+    Food_Item: str
+    Item_Type: str
+    Category: str
+    Vendor_Type: str
 
 # ==========================================
 # 3. THE PREDICTION ENDPOINT
@@ -41,17 +41,17 @@ async def predict_price(req: PredictionRequest):
 
         # Step B: Gather the inputs we DO have
         raw_inputs = {
-            "food_item": req.food_item,
-            "item_type": req.item_type,
-            "category": req.category,
-            "vendor_type": req.vendor_type,
-            "Price_Change_1M": df_context['Price_Change_1M'].iloc[0],
-            "Price_Change_3M": df_context['Price_Change_3M'].iloc[0],
-            "Price_Change_6M": df_context['Price_Change_6M'].iloc[0],
-            "Price_Change_1Y": df_context['Price_Change_1Y'].iloc[0],
+            "Food_Item": req.Food_Item,
+            "Item_Type": req.Item_Type,
+            "Category": req.Category,
+            "Vendor_Type": req.Vendor_Type,
+            "Price_Change_1M_Percent": df_context['Price_Change_1M_Percent'].iloc[0],
+            "Price_Change_3M_Percent": df_context['Price_Change_3M_Percent'].iloc[0],
+            "Price_Change_6M_Percent": df_context['Price_Change_6M_Percent'].iloc[0],
+            "Price_Change_1Y_Percent": df_context['Price_Change_1Y_Percent'].iloc[0],
             "Avg_Temperature_C": df_context['Avg_Temperature_C'].iloc[0],
             "Precipitation_mm": df_context['Precipitation_mm'].iloc[0],
-            "General_Inflation_Rate": df_context['General_Inflation_Rate'].iloc[0],
+            "General_Inflation_Rate_Percent": df_context['General_Inflation_Rate_Percent'].iloc[0],
             "Month_Num": df_context['Month_Num'].iloc[0]
         }
         
@@ -64,8 +64,8 @@ async def predict_price(req: PredictionRequest):
         # Step F: Return the finalized JSON Payload to the Frontend
         return {
             "metadata": {
-                "food_item": req.food_item,
-                "vendor_type": req.vendor_type
+                "Food_Item": req.Food_Item,
+                "Vendor_Type": req.Vendor_Type
             },
             "forecast_horizon": "1_Month",
             "predicted_price_change_percent": float(round(prediction, 2)),

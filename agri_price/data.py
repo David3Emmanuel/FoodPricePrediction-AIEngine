@@ -19,7 +19,7 @@ def load_data(path: str) -> tuple[pd.DataFrame, pd.Series, list[str]]:
             df[col] = df[col].astype(str).str.lower().str.strip()
 
     # Use our precise 1-Month target
-    target_col = 'TARGET_Price_Change_1M'
+    target_col = 'Target_Price_Change_1M_Percent'
 
     X = df.drop(columns=['Year', 'Month', 'Week', target_col], errors='ignore')
     y = df[target_col]
@@ -89,9 +89,9 @@ def build_combined_dataset(
     df_food = (
         df_food_raw.drop(columns=['date'])
         .groupby(['year', 'week', 'food_item', 'location'])
-        .agg(price=('price', 'mean'), item_type=('item_type', 'first'), category=('category', 'first'))
+        .agg(Price_NGN=('price', 'mean'), Item_Type=('item_type', 'first'), Category=('category', 'first'))
         .reset_index()
-        .rename(columns={'year': 'Year', 'week': 'Week', 'location': 'State'})
+        .rename(columns={'year': 'Year', 'week': 'Week', 'location': 'State', 'food_item': 'Food_Item'})
     )
 
     # 5. Diesel
@@ -115,11 +115,11 @@ def build_combined_dataset(
     # 6. Crude Oil
     print("Processing Crude Oil...")
     df_crude_raw = pd.read_excel(crude_oil_path)
-    df_crude_raw.columns = ['Date', 'Crude_Oil_Price']
+    df_crude_raw.columns = ['Date', 'Crude_Oil_Price_USD']
     df_crude_raw['Date'] = pd.to_datetime(df_crude_raw['Date'], dayfirst=True)
     df_crude_raw['Year'] = df_crude_raw['Date'].dt.year
     df_crude_raw['Week'] = df_crude_raw['Date'].dt.strftime('%W').astype(int)
-    df_crude = df_crude_raw.groupby(['Year', 'Week'])['Crude_Oil_Price'].mean().reset_index()
+    df_crude = df_crude_raw.groupby(['Year', 'Week'])['Crude_Oil_Price_USD'].mean().reset_index()
 
     # 7. Exchange Rate
     print("Processing Exchange Rates...")
@@ -127,7 +127,7 @@ def build_combined_dataset(
     df_ex_raw['Date'] = pd.to_datetime(df_ex_raw['ratedate'], format='%B-%d-%Y')
     df_ex_raw['Year'] = df_ex_raw['Date'].dt.year
     df_ex_raw['Week'] = df_ex_raw['Date'].dt.strftime('%W').astype(int)
-    df_exchange = df_ex_raw.groupby(['Year', 'Week']).agg(Exchange_Rate=('weightedAvgRate', 'mean')).reset_index()
+    df_exchange = df_ex_raw.groupby(['Year', 'Week']).agg(Exchange_Rate_NGN_USD=('weightedAvgRate', 'mean')).reset_index()
 
     # 8. Inflation
     print("Processing Inflation...")
@@ -135,9 +135,9 @@ def build_combined_dataset(
     df_inf_monthly = df_inf_raw.rename(columns={
         'tyear': 'Year',
         'tmonth': 'Month',
-        'foodYearOn': 'Food_Inflation_Rate',
-        'allItemsLessFrmProdYearOn': 'General_Inflation_Rate',
-    })[['Year', 'Month', 'Food_Inflation_Rate', 'General_Inflation_Rate']]
+        'foodYearOn': 'Food_Inflation_Rate_Percent',
+        'allItemsLessFrmProdYearOn': 'General_Inflation_Rate_Percent',
+    })[['Year', 'Month', 'Food_Inflation_Rate_Percent', 'General_Inflation_Rate_Percent']]
     df_inflation = utils.monthly_to_weekly(df_inf_monthly, mode='mean')
 
     # Final Merge

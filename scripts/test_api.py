@@ -6,10 +6,10 @@ def test_prediction():
     
     # Sample payload based on the PredictionRequest model in api/app.py
     payload = {
-        "food_item": "maize",
-        "item_type": "grain",
-        "category": "cereals",
-        "vendor_type": "retail"
+        "Food_Item": "maize",
+        "Item_Type": "grain",
+        "Category": "cereals",
+        "Vendor_Type": "retail"
     }
     
     print(f"Sending request to {url}...")

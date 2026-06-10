@@ -52,16 +52,16 @@ def fetch_nigeria_insecurity(year: Optional[int] = None) -> pd.DataFrame:
     df['fatalities'] = pd.to_numeric(df['fatalities'], errors='coerce').fillna(0)
     
     # Aggregate by State (admin1), Year, Month
-    df['Events'] = 1
+    df['Regional_Events_Count'] = 1
     
     agg_df = df.groupby(['admin1', 'Year', 'Month']).agg({
-        'Events': 'sum',
+        'Regional_Events_Count': 'sum',
         'fatalities': 'sum'
     }).reset_index()
     
     agg_df.rename(columns={
-        'admin1': 'Admin1',
-        'fatalities': 'Fatalities'
+        'admin1': 'State',
+        'fatalities': 'Regional_Fatalities_Count'
     }, inplace=True)
     
     return agg_df

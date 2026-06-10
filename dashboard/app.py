@@ -26,18 +26,18 @@ X_baseline = X
 st.sidebar.header("🕹️ Scenario Simulator")
 
 # Cascading Dynamic Dropdowns (Reads directly from your CSV)
-available_crops = sorted(X_baseline['food_item'].unique())
+available_crops = sorted(X_baseline['Food_Item'].unique())
 selected_crop = st.sidebar.selectbox("Select Crop", available_crops)
 
 # Filter the available vendors based on the crop selected to prevent impossible combinations
-valid_vendors = sorted(X_baseline[X_baseline['food_item'] == selected_crop]['vendor_type'].unique())
+valid_vendors = sorted(X_baseline[X_baseline['Food_Item'] == selected_crop]['Vendor_Type'].unique())
 selected_vendor = st.sidebar.selectbox("Select Vendor Type", valid_vendors)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Simulate Market Shocks")
 
 # Extract realistic medians from the actual data for the sliders
-inf_med = float(X_baseline['General_Inflation_Rate'].median())
+inf_med = float(X_baseline['General_Inflation_Rate_Percent'].median())
 temp_med = float(X_baseline['Avg_Temperature_C'].median())
 
 # If you have Diesel or Conflict features in your master CSV, you can safely swap these back!
@@ -47,17 +47,17 @@ sim_precip = st.sidebar.slider("Precipitation (mm)", 0.0, 300.0, float(X_baselin
 
 # --- Prediction Logic ---
 # Grab the most recent real row for this specific crop & vendor to act as our baseline
-crop_history = X_baseline[(X_baseline['food_item'] == selected_crop) & (X_baseline['vendor_type'] == selected_vendor)]
+crop_history = X_baseline[(X_baseline['Food_Item'] == selected_crop) & (X_baseline['Vendor_Type'] == selected_vendor)]
 
 # Fallback in case a specific vendor/crop combo is rare
 if crop_history.empty:
-    crop_history = X_baseline[X_baseline['food_item'] == selected_crop]
+    crop_history = X_baseline[X_baseline['Food_Item'] == selected_crop]
     
 baseline_row = crop_history.iloc[-1].copy()
 
 # Inject the Manager's simulated inputs!
-baseline_row['vendor_type'] = selected_vendor
-baseline_row['General_Inflation_Rate'] = sim_inflation
+baseline_row['Vendor_Type'] = selected_vendor
+baseline_row['General_Inflation_Rate_Percent'] = sim_inflation
 baseline_row['Avg_Temperature_C'] = sim_temp
 baseline_row['Precipitation_mm'] = sim_precip
 

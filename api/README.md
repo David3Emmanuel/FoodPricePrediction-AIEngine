@@ -35,10 +35,10 @@ Predicts the 1-month price change for a specific commodity.
 **Request Body:**
 ```json
 {
-  "food_item": "maize",
-  "item_type": "grain",
-  "category": "cereals",
-  "vendor_type": "retail"
+  "Food_Item": "maize",
+  "Item_Type": "grain",
+  "Category": "cereals",
+  "Vendor_Type": "retail"
 }
 ```
 

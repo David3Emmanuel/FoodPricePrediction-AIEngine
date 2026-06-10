@@ -15,15 +15,17 @@ def setup_db():
             Price_Change_1Y REAL,
             Avg_Temperature_C REAL,
             Precipitation_mm REAL,
-            Month_Num REAL
+            Solar_Radiation_MJ REAL,
+            Month_Num REAL,
+            Season TEXT
         )
     ''')
     
     # Inserting MOCK data (You'll need to get real data)
     cursor.execute('''
         INSERT OR REPLACE INTO current_market_state 
-        (id, General_Inflation_Rate, Price_Change_1M, Price_Change_3M, Price_Change_6M, Price_Change_1Y, Avg_Temperature_C, Precipitation_mm, Month_Num)
-        VALUES (1, 32.7, 5.2, -16.19, 12.4, 135.17, 25.93, 29.17, 9.0)
+        (id, General_Inflation_Rate, Price_Change_1M, Price_Change_3M, Price_Change_6M, Price_Change_1Y, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
+        VALUES (1, 32.7, 5.2, -16.19, 12.4, 135.17, 25.93, 29.17, 15.2, 9.0, 'Dry')
     ''')
     
     conn.commit()

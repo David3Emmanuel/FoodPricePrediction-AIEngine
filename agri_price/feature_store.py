@@ -32,15 +32,21 @@ def fetch_live_weather(state: str = DEFAULT_STATE):
         url = (
             "https://api.open-meteo.com/v1/forecast?"
             f"latitude={lat}&longitude={lon}"
-            "&current=temperature_2m,precipitation&timezone=Africa%2FLagos"
+            "&current=temperature_2m,precipitation,shortwave_radiation&timezone=Africa%2FLagos"
         )
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
+
+        # Convert W/m^2 to MJ for the last hour
+        watts_per_sq_meter = data['current']['shortwave_radiation']
+        joules_per_sq_meter = watts_per_sq_meter * 3600  # 3600 seconds in an hour
+        megajoules_per_sq_meter = joules_per_sq_meter / 1_000_000
         
         return {
             "Avg_Temperature_C": data['current']['temperature_2m'],
-            "Precipitation_mm": data['current']['precipitation']
+            "Precipitation_mm": data['current']['precipitation'],
+            "Solar_Radiation_MJ": megajoules_per_sq_meter
         }
     except Exception as e:
         logging.error(f"Weather API failed: {e}")
@@ -75,14 +81,22 @@ def fetch_market_price_lags():
         logging.error(f"Market DB query failed: {e}")
         return None
 
+def get_season(month: int) -> str:
+    """Determines the Nigerian season from the month."""
+    if 4 <= month <= 10:
+        return "Wet"
+    return "Dry"
+
 def main(state: str = DEFAULT_STATE):
     logging.info("Starting nightly feature store update...")
     
     # 1. Gather all live data
+    now = datetime.now()
     weather = fetch_live_weather(state)
     macro = fetch_macro_economics()
     market = fetch_market_price_lags()
-    current_month = datetime.now().month
+    current_month = now.month
+    current_season = get_season(current_month)
 
     # 2. Connect to the local SQLite Feature Store
     conn = sqlite3.connect('feature_store.db')
@@ -95,11 +109,11 @@ def main(state: str = DEFAULT_STATE):
     
     if yesterday_data is None:
         logging.warning("Feature store is empty. Forcing update with available data.")
-        # Create a blank slate if the DB is completely empty (matches the 9 columns we created)
-        yesterday_data = (1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, current_month)
+        # Create a blank slate if the DB is completely empty (matches the 11 columns we created)
+        yesterday_data = (1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, current_month, "Unknown")
 
     # 4. Construct the Final Update Payload
-    # Format: id, Inflation, 1M, 3M, 6M, 1Y, Temp, Precip, Month
+    # Format: id, Inflation, 1M, 3M, 6M, 1Y, Temp, Precip, Solar, Month, Season
     updated_values = (
         1,
         macro['General_Inflation_Rate'] if macro else yesterday_data[1],
@@ -109,14 +123,16 @@ def main(state: str = DEFAULT_STATE):
         market['Price_Change_1Y'] if market else yesterday_data[5],
         weather['Avg_Temperature_C'] if weather else yesterday_data[6],
         weather['Precipitation_mm'] if weather else yesterday_data[7],
-        current_month
+        weather['Solar_Radiation_MJ'] if weather else yesterday_data[8],
+        current_month,
+        current_season
     )
 
     # 5. Push to Database
     cursor.execute('''
         INSERT OR REPLACE INTO current_market_state 
-        (id, General_Inflation_Rate, Price_Change_1M, Price_Change_3M, Price_Change_6M, Price_Change_1Y, Avg_Temperature_C, Precipitation_mm, Month_Num)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, General_Inflation_Rate, Price_Change_1M, Price_Change_3M, Price_Change_6M, Price_Change_1Y, Avg_Temperature_C, Precipitation_mm, Solar_Radiation_MJ, Month_Num, Season)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', updated_values)
 
     conn.commit()

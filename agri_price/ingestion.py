@@ -8,8 +8,26 @@ from typing import Optional
 
 from agri_price import insecurity
 from agri_price import utils
+from agri_price import depotdata
 
 from agri_price.state_coords import state_coords
+
+def fetch_latest_diesel_prices() -> pd.DataFrame:
+    """
+    Fetches the latest diesel prices from DepotData.ng.
+    """
+    print("Fetching real-time diesel prices from DepotData.ng...")
+    df_depot = depotdata.fetch_depot_prices()
+    if not df_depot.empty:
+        # Standardize for the feature store
+        df_depot = df_depot[df_depot['State'] != 'Unknown']
+        if not df_depot.empty:
+            # Average by State if multiple depots exist
+            df_state = df_depot.groupby('State')['AGO'].mean().reset_index()
+            df_state.rename(columns={'AGO': 'Diesel_Price_NGN'}, inplace=True)
+            return df_state
+            
+    return pd.DataFrame()
 
 def get_season(month: int) -> str:
     """Determines the Nigerian season from the month."""
@@ -259,10 +277,17 @@ def ingest_all_to_db(db_path: str, start_year: int = 2022):
     if not df_weather.empty:
         df_weather.to_sql("weekly_weather", conn, if_exists='replace', index=False)
 
-    # 6. Diesel (Mock for now as requested API priceradar.ng might need more specific research)
-    # But I will add a placeholder that can be easily updated.
-    print("Diesel price API ingestion placeholder...")
-    # TODO: Implement priceradar.ng or similar
+    # 6. Diesel
+    print("Fetching latest diesel prices...")
+    df_diesel = fetch_latest_diesel_prices()
+    if not df_diesel.empty:
+        # For historical context in build_dataset, we usually need more than just 'latest'
+        # but for the nightly update/feature store, this is perfect.
+        # We broadcast the latest price to the current year/week
+        now = datetime.now()
+        df_diesel['Year'] = now.year
+        df_diesel['Week'] = int(now.strftime('%W'))
+        df_diesel.to_sql("weekly_diesel", conn, if_exists='append', index=False)
     
     conn.close()
     print("All API data ingested into DB.")

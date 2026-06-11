@@ -65,11 +65,11 @@ def build_combined_dataset(
     """
     conn = sqlite3.connect(db_path)
     
-    # 1. News Sentiment (Remains File-based)
+    # 1. News Sentiment (Remains File-based, but now cached)
     print("Processing News...")
     df_news_raw = pd.read_excel(news_path)
     df_news_raw = df_news_raw[pd.to_numeric(df_news_raw['id'], errors='coerce').notna()].reset_index(drop=True)
-    df_news = news.process_news_dataframe(df_news_raw)
+    df_news = news.process_news_dataframe(df_news_raw, db_path=db_path)
 
     # 2. Insecurity (Load from DB)
     print("Loading Insecurity...")

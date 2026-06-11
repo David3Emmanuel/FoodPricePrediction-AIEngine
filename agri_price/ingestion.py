@@ -204,6 +204,8 @@ def create_schema(db_path: str):
         "weekly_crude_oil": "Year INTEGER, Week INTEGER, Crude_Oil_Price_USD REAL",
         "weekly_exchange_rate": "Year INTEGER, Week INTEGER, Exchange_Rate_NGN_USD REAL",
         "weekly_inflation": "Year INTEGER, Week INTEGER, General_Inflation_Rate_Percent REAL",
+        "weekly_news": "Year INTEGER, Week INTEGER, Weekly_Econ_Sentiment_Score REAL",
+        "raw_news_sentiment": "id TEXT PRIMARY KEY, Sentiment_Score REAL",
         "historical_data": "State TEXT, Year INTEGER, Week INTEGER, Food_Item TEXT, Price_NGN REAL, Item_Type TEXT, Category TEXT, Vendor_Type TEXT"
     }
     

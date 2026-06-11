@@ -173,8 +173,50 @@ def fetch_historical_weather(states: list[str], start_date: str, end_date: str) 
         
     return pd.concat(all_weather, ignore_index=True)
 
+def create_schema(db_path: str):
+    """Ensures all required tables exist in the SQLite database."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Tables for the data groups
+    tables = {
+        "weekly_weather": "State TEXT, Year INTEGER, Week INTEGER, Avg_Temperature_C REAL, Precipitation_mm REAL, Solar_Radiation_MJ REAL",
+        "weekly_insecurity": "State TEXT, Year INTEGER, Week INTEGER, Regional_Events_Count INTEGER, Regional_Fatalities_Count INTEGER",
+        "weekly_diesel": "State TEXT, Year INTEGER, Week INTEGER, Diesel_Price_NGN REAL",
+        "weekly_crude_oil": "Year INTEGER, Week INTEGER, Crude_Oil_Price_USD REAL",
+        "weekly_exchange_rate": "Year INTEGER, Week INTEGER, Exchange_Rate_NGN_USD REAL",
+        "weekly_inflation": "Year INTEGER, Week INTEGER, General_Inflation_Rate_Percent REAL",
+        "historical_data": "State TEXT, Year INTEGER, Week INTEGER, Food_Item TEXT, Price_NGN REAL, Item_Type TEXT, Category TEXT, Vendor_Type TEXT"
+    }
+    
+    for table_name, schema in tables.items():
+        cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({schema})")
+        
+    # Ensure current_market_state also exists (fallback if setup_db wasn't run)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS current_market_state (
+            id INTEGER PRIMARY KEY,
+            General_Inflation_Rate_Percent REAL,
+            Price_Change_1M_Percent REAL,
+            Price_Change_3M_Percent REAL,
+            Price_Change_6M_Percent REAL,
+            Price_Change_1Y_Percent REAL,
+            Avg_Temperature_C REAL,
+            Precipitation_mm REAL,
+            Solar_Radiation_MJ REAL,
+            Month_Num REAL,
+            Season TEXT
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("Database schema verified/created.")
+
 def ingest_all_to_db(db_path: str, start_year: int = 2022):
     """Orchestrates fetching and saving all API data to DB."""
+    create_schema(db_path)
+    
     start_date = f"{start_year}-01-01"
     end_date = datetime.now().strftime("%Y-%m-%d")
     

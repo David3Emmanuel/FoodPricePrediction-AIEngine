@@ -231,7 +231,7 @@ def create_schema(db_path: str):
     conn.close()
     print("Database schema verified/created.")
 
-def ingest_all_to_db(db_path: str, start_year: int = 2022):
+def ingest_all_to_db(db_path: str, start_year: int = 2022, states: Optional[list[str]] = None):
     """Orchestrates fetching and saving all API data to DB."""
     create_schema(db_path)
     
@@ -259,6 +259,10 @@ def ingest_all_to_db(db_path: str, start_year: int = 2022):
     print("Fetching historical insecurity data from ACLED...")
     df_ins_monthly = insecurity.fetch_nigeria_insecurity(year=start_year)
     if not df_ins_monthly.empty:
+        if states:
+            # Filter for relevant states
+            df_ins_monthly = df_ins_monthly[df_ins_monthly['State'].isin(states)]
+            
         # Convert monthly to weekly using utils
         ins_dfs = []
         for state in df_ins_monthly['State'].unique():
@@ -266,13 +270,16 @@ def ingest_all_to_db(db_path: str, start_year: int = 2022):
             weekly = utils.monthly_to_weekly(state_df, value_columns=['Regional_Events_Count', 'Regional_Fatalities_Count'], mode='sum')
             weekly['State'] = state
             ins_dfs.append(weekly)
-        df_insecurity = pd.concat(ins_dfs, ignore_index=True)
-        df_insecurity.to_sql("weekly_insecurity", conn, if_exists='replace', index=False)
+        
+        if ins_dfs:
+            df_insecurity = pd.concat(ins_dfs, ignore_index=True)
+            df_insecurity.to_sql("weekly_insecurity", conn, if_exists='replace', index=False)
 
     # 5. Weather
-    # Using a subset of states or all if possible
-    from agri_price.state_coords import state_coords
-    states = list(state_coords.keys())
+    if not states:
+        from agri_price.state_coords import state_coords
+        states = list(state_coords.keys())
+    
     df_weather = fetch_historical_weather(states, start_date, end_date)
     if not df_weather.empty:
         df_weather.to_sql("weekly_weather", conn, if_exists='replace', index=False)
@@ -281,13 +288,14 @@ def ingest_all_to_db(db_path: str, start_year: int = 2022):
     print("Fetching latest diesel prices...")
     df_diesel = fetch_latest_diesel_prices()
     if not df_diesel.empty:
-        # For historical context in build_dataset, we usually need more than just 'latest'
-        # but for the nightly update/feature store, this is perfect.
-        # We broadcast the latest price to the current year/week
-        now = datetime.now()
-        df_diesel['Year'] = now.year
-        df_diesel['Week'] = int(now.strftime('%W'))
-        df_diesel.to_sql("weekly_diesel", conn, if_exists='append', index=False)
+        if states:
+            df_diesel = df_diesel[df_diesel['State'].isin(states)]
+            
+        if not df_diesel.empty:
+            now = datetime.now()
+            df_diesel['Year'] = now.year
+            df_diesel['Week'] = int(now.strftime('%W'))
+            df_diesel.to_sql("weekly_diesel", conn, if_exists='append', index=False)
     
     conn.close()
     print("All API data ingested into DB.")

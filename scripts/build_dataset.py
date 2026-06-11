@@ -24,8 +24,24 @@ def main():
     db_path = Path(args.db_path)
     
     if not args.skip_ingestion:
+        print("Extracting relevant states from food price data...")
+        food_path = base_dir / "Sample 2022-2024.xlsx"
+        if not food_path.exists():
+            print(f"Error: Required file not found at {food_path}")
+            sys.exit(1)
+            
+        try:
+            # Read only the location column to identify unique states
+            df_food_states = pd.read_excel(food_path, sheet_name='Sheet1', usecols=['location'])
+            from agri_price.utils import coords_to_region
+            unique_states = coords_to_region(df_food_states['location']).unique().tolist()
+            print(f"Detected {len(unique_states)} unique states: {', '.join(unique_states)}")
+        except Exception as e:
+            print(f"Warning: Could not extract states from {food_path}: {e}. Ingesting for all states.")
+            unique_states = None
+
         print("Starting API-driven data ingestion...")
-        ingest_all_to_db(str(db_path))
+        ingest_all_to_db(str(db_path), states=unique_states)
 
     # Define paths for remaining file-based data
     news_path = base_dir / "news 2022-2024.xlsx"

@@ -1,11 +1,11 @@
 import pandas as pd
 from pathlib import Path
-from agri_price.data import build_combined_dataset, save_to_db
+from agri_price.data.db_manager import build_combined_dataset, save_to_db
 import os
 import sys
 import argparse
 
-from agri_price.ingestion import ingest_all_to_db
+from agri_price.ingestion.orchestrator import ingest_all_to_db
 
 def main():
     repo_root = Path(__file__).resolve().parents[1]
@@ -33,7 +33,7 @@ def main():
         try:
             # Read only the location column to identify unique states
             df_food_states = pd.read_excel(food_path, sheet_name='Sheet1', usecols=['location'])
-            from agri_price.utils import coords_to_region
+            from agri_price.core.utils import coords_to_region
             unique_states = coords_to_region(df_food_states['location']).unique().tolist()
             print(f"Detected {len(unique_states)} unique states: {', '.join(unique_states)}")
         except Exception as e:

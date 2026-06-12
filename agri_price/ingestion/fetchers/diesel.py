@@ -109,6 +109,23 @@ def fetch_depot_prices() -> pd.DataFrame:
         print(f"Scraping DepotData.ng failed: {e}")
         return pd.DataFrame()
 
+def fetch_latest_diesel_prices() -> pd.DataFrame:
+    """
+    Fetches the latest diesel prices from DepotData.ng.
+    """
+    print("Fetching real-time diesel prices from DepotData.ng...")
+    df_depot = fetch_depot_prices()
+    if not df_depot.empty:
+        # Standardize for the feature store
+        df_depot = df_depot[df_depot['State'] != 'Unknown']
+        if not df_depot.empty:
+            # Average by State if multiple depots exist
+            df_state = df_depot.groupby('State')['AGO'].mean().reset_index()
+            df_state.rename(columns={'AGO': 'Diesel_Price_NGN'}, inplace=True)
+            return df_state
+            
+    return pd.DataFrame()
+
 if __name__ == "__main__":
     df = fetch_depot_prices()
     if not df.empty:

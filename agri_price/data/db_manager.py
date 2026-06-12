@@ -1,11 +1,48 @@
 import pandas as pd
-from pathlib import Path
-from typing import Any, Optional
-
-from agri_price import utils
-from agri_price import news
-
 import sqlite3
+from typing import Tuple, List
+
+def create_schema(db_path: str):
+    """Ensures all required tables exist in the SQLite database."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Tables for the data groups
+    tables = {
+        "weekly_weather": "State TEXT, Year INTEGER, Week INTEGER, Avg_Temperature_C REAL, Precipitation_mm REAL, Solar_Radiation_MJ REAL",
+        "weekly_insecurity": "State TEXT, Year INTEGER, Week INTEGER, Regional_Events_Count INTEGER, Regional_Fatalities_Count INTEGER",
+        "weekly_diesel": "State TEXT, Year INTEGER, Week INTEGER, Diesel_Price_NGN REAL",
+        "weekly_crude_oil": "Year INTEGER, Week INTEGER, Crude_Oil_Price_USD REAL",
+        "weekly_exchange_rate": "Year INTEGER, Week INTEGER, Exchange_Rate_NGN_USD REAL",
+        "weekly_inflation": "Year INTEGER, Week INTEGER, General_Inflation_Rate_Percent REAL, Food_Inflation_Rate_Percent REAL",
+        "weekly_news": "Year INTEGER, Week INTEGER, Weekly_Econ_Sentiment_Score REAL",
+        "raw_news_sentiment": "id TEXT PRIMARY KEY, Sentiment_Score REAL",
+        "historical_data": "State TEXT, Year INTEGER, Week INTEGER, Food_Item TEXT, Price_NGN REAL, Item_Type TEXT, Category TEXT, Vendor_Type TEXT"
+    }
+    
+    for table_name, schema in tables.items():
+        cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({schema})")
+        
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS current_market_state (
+            id INTEGER PRIMARY KEY,
+            General_Inflation_Rate_Percent REAL,
+            Food_Inflation_Rate_Percent REAL,
+            Price_Change_1M_Percent REAL,
+            Price_Change_3M_Percent REAL,
+            Price_Change_6M_Percent REAL,
+            Price_Change_1Y_Percent REAL,
+            Avg_Temperature_C REAL,
+            Precipitation_mm REAL,
+            Solar_Radiation_MJ REAL,
+            Month_Num REAL,
+            Season TEXT
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("Database schema verified/created.")
 
 def load_data(path: str, table_name: str = "historical_data") -> tuple[pd.DataFrame, pd.Series, list[str]]:
     # Load the latest dataset (from CSV or SQL)
@@ -16,23 +53,17 @@ def load_data(path: str, table_name: str = "historical_data") -> tuple[pd.DataFr
     else:
         df = pd.read_csv(path)
 
-    # 1. DYNAMICALLY auto-detect all text/categorical columns! 
-    # This grabs 'state', 'food_item', and any future text columns you add.
     cat_features = df.select_dtypes(include=['object', 'string']).columns.tolist()
 
-    # Ensure categorical columns are perfectly clean strings
     for col in cat_features:
         if col in df.columns:
             df[col] = df[col].astype(str).str.lower().str.strip()
 
-    # Use our precise 1-Month target
-    # Check if we have the standardized name or the CSV variant
     if 'Target_Price_Change_1M_Percent' in df.columns:
         target_col = 'Target_Price_Change_1M_Percent'
     elif 'TARGET_Price_Change_1M' in df.columns:
         target_col = 'TARGET_Price_Change_1M'
     else:
-        # Fallback or error
         target_col = [col for col in df.columns if 'TARGET' in col.upper()][0]
 
     X = df.drop(columns=['Year', 'Month', 'Week', target_col], errors='ignore')
@@ -63,6 +94,9 @@ def build_combined_dataset(
     Combines pre-processed database tables and specific file-based raw data
     into a single weekly dataset.
     """
+    from agri_price.core import utils
+    from agri_price.ingestion.fetchers import news
+    
     conn = sqlite3.connect(db_path)
     
     # 1. News Sentiment (Remains File-based, but now cached)

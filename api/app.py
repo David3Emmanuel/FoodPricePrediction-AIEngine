@@ -3,13 +3,13 @@ from pydantic import BaseModel
 import pandas as pd
 import sqlite3
 
-import agri_price.predictor
+import agri_price.core.predictor
 
 # ==========================================
 # 1. INITIALIZE SERVER & LOAD AI INTO RAM
 # ==========================================
 app = FastAPI(title="AgriPrice Prediction API", version="1.0")
-model, explainer = agri_price.predictor.load_model("models/agri_price_model.cbm")
+model, explainer = agri_price.core.predictor.load_model("models/agri_price_model.cbm")
 
 # ==========================================
 # 2. DEFINE THE FRONTEND PAYLOAD
@@ -58,11 +58,11 @@ async def predict_price(req: PredictionRequest):
             "Month_Num": df_context['Month_Num'].iloc[0]
         }
         
-        input_data = agri_price.predictor.build_input_df(raw_inputs, model)
+        input_data = agri_price.core.predictor.build_input_df(raw_inputs, model)
 
         # Step D: Run the Prediction
         prediction = model.predict(input_data)[0]
-        base_value, feature_impacts = agri_price.predictor.run_shap(explainer, input_data)
+        base_value, feature_impacts = agri_price.core.predictor.run_shap(explainer, input_data)
 
         # Step F: Return the finalized JSON Payload to the Frontend
         return {

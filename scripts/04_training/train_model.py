@@ -2,7 +2,7 @@ from catboost import CatBoostRegressor
 from pathlib import Path
 from datetime import datetime
 
-from agri_price.data import load_data
+from agri_price.data.db_manager import load_data
 
 
 def main():

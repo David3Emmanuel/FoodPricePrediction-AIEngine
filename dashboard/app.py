@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-import agri_price.predictor
-import agri_price.data
+import agri_price.core.predictor
+import agri_price.data.db_manager
 
 # --- UI Setup ---
 st.set_page_config(page_title="AgriPrice AI Demo", layout="wide")
@@ -11,11 +11,11 @@ st.markdown("Adjust the macroeconomic parameters on the left to simulate shocks 
 
 @st.cache_resource
 def load_and_train_model():
-    return agri_price.predictor.load_model("models/agri_price_model.cbm")
+    return agri_price.core.predictor.load_model("models/agri_price_model.cbm")
 
 @st.cache_data
 def load_data():
-    return agri_price.data.load_data("data/feature_store.db", table_name="historical_data")
+    return agri_price.data.db_manager.load_data("data/feature_store.db", table_name="historical_data")
 
 model, explainer = load_and_train_model()
 X, y, cat_features = load_data()
@@ -66,7 +66,7 @@ baseline_row['Avg_Temperature_C'] = sim_temp
 baseline_row['Precipitation_mm'] = sim_precip
 
 # Format for CatBoost
-input_df = agri_price.predictor.build_input_df(dict(baseline_row), model)
+input_df = agri_price.core.predictor.build_input_df(dict(baseline_row), model)
 
 # Make the Prediction
 prediction = model.predict(input_df)[0]
@@ -86,7 +86,7 @@ st.metric(
 st.markdown("### 🧠 Model Explainability (SHAP)")
 st.markdown("Why is the model predicting this? Here are the top variables driving the math right now:")
 
-shap_values, impacts = agri_price.predictor.run_shap(explainer, input_df)
+shap_values, impacts = agri_price.core.predictor.run_shap(explainer, input_df)
 
 # Sort and display as an interactive table and bar chart
 if impacts:

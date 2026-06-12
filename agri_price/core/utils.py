@@ -113,3 +113,9 @@ def monthly_to_weekly(df: pd.DataFrame, value_columns: list[str] | None = None, 
           .astype({'Year': 'int64', 'Week': 'int64'} | {col: 'float' for col in value_columns})
           .reset_index(drop=True)
     )
+
+def get_season(month: int) -> str:
+    """Determines the Nigerian season from the month."""
+    if 4 <= month <= 10:
+        return "Wet"
+    return "Dry"

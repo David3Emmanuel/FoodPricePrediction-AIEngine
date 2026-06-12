@@ -5,7 +5,9 @@ from datetime import datetime
 from pathlib import Path
 import pandas as pd
 
-from agri_price.ingestion import fetch_live_weather, fetch_live_macro_economics, get_season
+from agri_price.ingestion.fetchers import weather, inflation
+from agri_price.core.utils import get_season
+from agri_price.data.feature_logic import fetch_market_price_lags
 
 # 1. Setup Logging
 logging.basicConfig(
@@ -16,42 +18,17 @@ logging.basicConfig(
 
 DEFAULT_STATE = 'Lagos'
 
-def fetch_market_price_lags(db_path: str):
-    """
-    Calculates the 1M, 3M, 6M, and 1Y lags from the historical database.
-    """
-    try:
-        conn = sqlite3.connect(db_path)
-        # Pull the latest record from historical_data
-        df = pd.read_sql_query("SELECT * FROM historical_data ORDER BY Year DESC, Week DESC LIMIT 1", conn)
-        conn.close()
-        
-        if df.empty:
-            return None
-            
-        latest = df.iloc[0]
-        # Map CSV/DB columns to the expected feature names
-        return {
-            "Price_Change_1M_Percent": float(latest.get('Price_Change_1M', latest.get('Price_Change_1M_Percent', 0.0))),
-            "Price_Change_3M_Percent": float(latest.get('Price_Change_3M', latest.get('Price_Change_3M_Percent', 0.0))),
-            "Price_Change_6M_Percent": float(latest.get('Price_Change_6M', latest.get('Price_Change_6M_Percent', 0.0))),
-            "Price_Change_1Y_Percent": float(latest.get('Price_Change_1Y', latest.get('Price_Change_1Y_Percent', 0.0)))
-        }
-    except Exception as e:
-        logging.error(f"Market DB query failed: {e}")
-        return None
-
 def main(state: str = DEFAULT_STATE):
     logging.info("Starting nightly feature store update...")
     
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     db_path = str(repo_root / "data" / "feature_store.db")
     
     # 1. Gather all live data
     now = datetime.now()
-    weather = fetch_live_weather(state)
-    macro = fetch_live_macro_economics()
-    market = fetch_market_price_lags(db_path)
+    weather_data = weather.fetch_live_weather(state)
+    macro = inflation.fetch_live_macro_economics()
+    market_lags = fetch_market_price_lags(db_path)
     current_month = now.month
     current_season = get_season(current_month)
 
@@ -73,13 +50,13 @@ def main(state: str = DEFAULT_STATE):
         1,
         macro['General_Inflation_Rate_Percent'] if macro else yesterday_data[1],
         macro['Food_Inflation_Rate_Percent'] if macro else yesterday_data[2],
-        market['Price_Change_1M_Percent'] if market else yesterday_data[3],
-        market['Price_Change_3M_Percent'] if market else yesterday_data[4],
-        market['Price_Change_6M_Percent'] if market else yesterday_data[5],
-        market['Price_Change_1Y_Percent'] if market else yesterday_data[6],
-        weather['Avg_Temperature_C'] if weather else yesterday_data[7],
-        weather['Precipitation_mm'] if weather else yesterday_data[8],
-        weather['Solar_Radiation_MJ'] if weather else yesterday_data[9],
+        market_lags['Price_Change_1M_Percent'] if market_lags else yesterday_data[3],
+        market_lags['Price_Change_3M_Percent'] if market_lags else yesterday_data[4],
+        market_lags['Price_Change_6M_Percent'] if market_lags else yesterday_data[5],
+        market_lags['Price_Change_1Y_Percent'] if market_lags else yesterday_data[6],
+        weather_data['Avg_Temperature_C'] if weather_data else yesterday_data[7],
+        weather_data['Precipitation_mm'] if weather_data else yesterday_data[8],
+        weather_data['Solar_Radiation_MJ'] if weather_data else yesterday_data[9],
         current_month,
         current_season
     )

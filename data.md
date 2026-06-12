@@ -59,10 +59,10 @@ Certain features include historical "lags" or "deltas" to capture trends. These 
 | **News Sentiment** | Web/News API (Excel) | Daily | **FinBERT** Sentiment Classification |
 | **Insecurity** | ACLED (API/Excel) | Monthly/Weekly | Sum aggregation for events/fatalities |
 | **Weather** | Open Meteo (API) | Daily | Mean/Sum aggregation by State |
-| **Inflation** | National Bureau of Stats (Excel) | Monthly | Mean interpolation to weekly |
-| **Diesel Price** | National Bureau of Stats (Excel) | Monthly | Mean interpolation by State |
-| **Crude Oil** | Global Markets (Excel) | Daily | Mean aggregation |
-| **Exchange Rate** | Central Bank (Excel) | Daily | Weighted Average Mean aggregation |
+| **Inflation** | World Bank Data360 (API) | Monthly | Monthly to Weekly resampling with pre-filling |
+| **Diesel Price** | DepotData.ng (API) / NBS | Daily/Monthly | Real-time scrapers & Mean interpolation |
+| **Crude Oil** | Yahoo Finance (API) | Daily | Mean aggregation |
+| **Exchange Rate** | Yahoo Finance (API) | Daily | Mean aggregation |
 
 ---
 

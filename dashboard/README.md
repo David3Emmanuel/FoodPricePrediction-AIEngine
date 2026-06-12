@@ -22,5 +22,5 @@ The dashboard will open in your default web browser (usually at `http://localhos
 
 ## Usage
 1. **Select Crop & Vendor:** Choose the commodity you want to analyze.
-2. **Simulate Shocks:** Adjust the sliders in the sidebar for Inflation, Temperature, and Precipitation.
+2. **Simulate Shocks:** Adjust the sliders in the sidebar for General Inflation, Food Inflation, Temperature, and Precipitation.
 3. **Analyze Results:** View the predicted 1-month price change and the SHAP explanation chart to understand which factors had the most impact.

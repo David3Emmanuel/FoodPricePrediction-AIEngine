@@ -2,6 +2,8 @@
 
 An AI-powered predictive engine designed to forecast national agricultural commodity prices. This project utilizes CatBoost for high-accuracy regression and SHAP (SHapley Additive exPlanations) to provide transparency into model decisions.
 
+It integrates granular macroeconomic data from the **World Bank Data360 API**, real-time weather from Open Meteo, and conflict data from ACLED to provide a comprehensive view of market drivers.
+
 ## Project Structure
 - `agri_price/`: Core Python package containing model prediction logic, data loading, and feature engineering.
 - `api/`: FastAPI backend for serving model predictions via REST.

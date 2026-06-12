@@ -38,10 +38,12 @@ st.sidebar.subheader("Simulate Market Shocks")
 
 # Extract realistic medians from the actual data for the sliders
 inf_med = float(X_baseline['General_Inflation_Rate_Percent'].median())
+food_inf_med = float(X_baseline.get('Food_Inflation_Rate_Percent', 40.0).median()) if 'Food_Inflation_Rate_Percent' in X_baseline.columns else 40.0
 temp_med = float(X_baseline['Avg_Temperature_C'].median())
 
 # If you have Diesel or Conflict features in your master CSV, you can safely swap these back!
 sim_inflation = st.sidebar.slider("General Inflation Rate (%)", 10.0, 50.0, inf_med)
+sim_food_inflation = st.sidebar.slider("Food Inflation Rate (%)", 10.0, 60.0, food_inf_med)
 sim_temp = st.sidebar.slider("Average Temperature (°C)", 20.0, 40.0, temp_med)
 sim_precip = st.sidebar.slider("Precipitation (mm)", 0.0, 300.0, float(X_baseline['Precipitation_mm'].median()))
 
@@ -58,6 +60,8 @@ baseline_row = crop_history.iloc[-1].copy()
 # Inject the Manager's simulated inputs!
 baseline_row['Vendor_Type'] = selected_vendor
 baseline_row['General_Inflation_Rate_Percent'] = sim_inflation
+if 'Food_Inflation_Rate_Percent' in baseline_row.index or 'Food_Inflation_Rate_Percent' in X_baseline.columns:
+    baseline_row['Food_Inflation_Rate_Percent'] = sim_food_inflation
 baseline_row['Avg_Temperature_C'] = sim_temp
 baseline_row['Precipitation_mm'] = sim_precip
 

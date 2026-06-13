@@ -17,7 +17,7 @@ This directory contains the FastAPI-based backend for the AgriPrice Prediction E
 ### 1. Initialize the Feature Store
 From the project root:
 ```bash
-python scripts/setup_db.py
+uv run scripts/02_database/setup_db.py
 ```
 
 ### 2. Run the API

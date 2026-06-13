@@ -7,6 +7,8 @@ This document explains how and when to run the scripts in the `scripts/` directo
 ## Stage 01: Collection
 **Goal**: Assemble the historical master dataset for training.
 
+> **Note**: To run these scripts without setting `PYTHONPATH`, ensure you have installed the project in editable mode via `uv pip install -e .`.
+
 ### `01_collection/bootstrap_diesel.py`
 - **When to run**: Once, or whenever you have a new batch of historical diesel data in CSV format that isn't available via real-time APIs.
 - **How**: `uv run scripts/01_collection/bootstrap_diesel.py --input-file data/raw/diesel_history.csv`

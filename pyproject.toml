@@ -1,0 +1,32 @@
+[project]
+name = "foodpriceprediction-aiengine"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "acled",
+    "agri-price",
+    "catboost>=1.2.10",
+    "fastapi>=0.136.3",
+    "numpy>=2.4.6",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.3",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
+    "reverse-geocoder>=1.5.1",
+    "shap>=0.52.0",
+    "streamlit>=1.58.0",
+    "torch>=2.12.0",
+    "tqdm>=4.67.3",
+    "transformers>=5.10.2",
+    "uvicorn>=0.48.0",
+    "yfinance>=1.4.1",
+]
+
+[tool.uv.workspace]
+members = [
+    "agri_price",
+]
+
+[tool.uv.sources]
+agri-price = { workspace = true }

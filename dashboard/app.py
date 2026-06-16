@@ -1,89 +1,72 @@
 import streamlit as st
 import pandas as pd
-from catboost import CatBoostRegressor
-import shap
+
+import agri_price.core.predictor
+import agri_price.data.db_manager
 
 # --- UI Setup ---
 st.set_page_config(page_title="AgriPrice AI Demo", layout="wide")
 st.title("🌾 National Agricultural Commodity Predictive Engine")
 st.markdown("Adjust the macroeconomic parameters on the left to simulate shocks and observe how the CatBoost model adjusts its 1-Month forecast.")
 
-# --- Cache the Model Training ---
-@st.cache_resource
-# --- Cache the Model Training ---
 @st.cache_resource
 def load_and_train_model():
-    # Load the latest dataset
-    df = pd.read_csv('ml_ready_global_data.csv')
-    
-    # 1. DYNAMICALLY auto-detect all text/categorical columns! 
-    # This grabs 'state', 'food_item', and any future text columns you add.
-    cat_features = df.select_dtypes(include=['object', 'string']).columns.tolist()
-    
-    # Ensure categorical columns are perfectly clean strings
-    for col in cat_features:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.lower().str.strip()
-            
-    # Use our precise 1-Month target
-    target_col = 'TARGET_Price_Change_1M' 
-    
-    X = df.drop(columns=['Year', 'Month', 'Week', target_col], errors='ignore')
-    y = df[target_col]
-    
-    # Double check that we only tell CatBoost about categories that are actually in X
-    cat_features = [col for col in cat_features if col in X.columns]
-    
-    # Train a fast, reliable model on the fly for the demo
-    model = CatBoostRegressor(iterations=138, depth=5, learning_rate=0.1, verbose=0)
-    model.fit(X, y, cat_features=cat_features)
-    
-    return model, X, cat_features
+    return agri_price.core.predictor.load_model("models/agri_price_model*.cbm")
 
-# Load everything
-model, X_baseline, cat_features = load_and_train_model()
+@st.cache_data
+def load_data():
+    return agri_price.data.db_manager.load_data("data/feature_store.db", table_name="historical_data")
+
+model, explainer = load_and_train_model()
+X, y, cat_features = load_data()
+
+X_baseline = X
 
 # --- Sidebar: The Control Panel (The Levers) ---
 st.sidebar.header("🕹️ Scenario Simulator")
 
 # Cascading Dynamic Dropdowns (Reads directly from your CSV)
-available_crops = sorted(X_baseline['food_item'].unique())
+available_crops = sorted(X_baseline['Food_Item'].unique())
 selected_crop = st.sidebar.selectbox("Select Crop", available_crops)
 
 # Filter the available vendors based on the crop selected to prevent impossible combinations
-valid_vendors = sorted(X_baseline[X_baseline['food_item'] == selected_crop]['vendor_type'].unique())
+valid_vendors = sorted(X_baseline[X_baseline['Food_Item'] == selected_crop]['Vendor_Type'].unique())
 selected_vendor = st.sidebar.selectbox("Select Vendor Type", valid_vendors)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Simulate Market Shocks")
 
 # Extract realistic medians from the actual data for the sliders
-inf_med = float(X_baseline['General_Inflation_Rate'].median())
+inf_med = float(X_baseline['General_Inflation_Rate_Percent'].median())
+food_inf_med = float(X_baseline.get('Food_Inflation_Rate_Percent', 40.0).median()) if 'Food_Inflation_Rate_Percent' in X_baseline.columns else 40.0
 temp_med = float(X_baseline['Avg_Temperature_C'].median())
 
 # If you have Diesel or Conflict features in your master CSV, you can safely swap these back!
 sim_inflation = st.sidebar.slider("General Inflation Rate (%)", 10.0, 50.0, inf_med)
+sim_food_inflation = st.sidebar.slider("Food Inflation Rate (%)", 10.0, 60.0, food_inf_med)
 sim_temp = st.sidebar.slider("Average Temperature (°C)", 20.0, 40.0, temp_med)
 sim_precip = st.sidebar.slider("Precipitation (mm)", 0.0, 300.0, float(X_baseline['Precipitation_mm'].median()))
 
 # --- Prediction Logic ---
 # Grab the most recent real row for this specific crop & vendor to act as our baseline
-crop_history = X_baseline[(X_baseline['food_item'] == selected_crop) & (X_baseline['vendor_type'] == selected_vendor)]
+crop_history = X_baseline[(X_baseline['Food_Item'] == selected_crop) & (X_baseline['Vendor_Type'] == selected_vendor)]
 
 # Fallback in case a specific vendor/crop combo is rare
 if crop_history.empty:
-    crop_history = X_baseline[X_baseline['food_item'] == selected_crop]
+    crop_history = X_baseline[X_baseline['Food_Item'] == selected_crop]
     
 baseline_row = crop_history.iloc[-1].copy()
 
 # Inject the Manager's simulated inputs!
-baseline_row['vendor_type'] = selected_vendor
-baseline_row['General_Inflation_Rate'] = sim_inflation
+baseline_row['Vendor_Type'] = selected_vendor
+baseline_row['General_Inflation_Rate_Percent'] = sim_inflation
+if 'Food_Inflation_Rate_Percent' in baseline_row.index or 'Food_Inflation_Rate_Percent' in X_baseline.columns:
+    baseline_row['Food_Inflation_Rate_Percent'] = sim_food_inflation
 baseline_row['Avg_Temperature_C'] = sim_temp
 baseline_row['Precipitation_mm'] = sim_precip
 
 # Format for CatBoost
-input_df = pd.DataFrame([baseline_row])
+input_df = agri_price.core.predictor.build_input_df(dict(baseline_row), model)
 
 # Make the Prediction
 prediction = model.predict(input_df)[0]
@@ -103,30 +86,18 @@ st.metric(
 st.markdown("### 🧠 Model Explainability (SHAP)")
 st.markdown("Why is the model predicting this? Here are the top variables driving the math right now:")
 
-# Run SHAP on the live input
-explainer = shap.TreeExplainer(model)
-shap_values = explainer(input_df)
-
-# Process SHAP values into a clean DataFrame for the UI
-impacts = []
-for feature_name, shap_val, actual_val in zip(input_df.columns, shap_values.values[0], input_df.values[0]):
-    if round(shap_val, 2) != 0:
-        impacts.append({
-            "Feature": feature_name,
-            "Simulated Input Value": actual_val,
-            "Impact on Price (%)": float(round(shap_val, 2))
-        })
+shap_values, impacts = agri_price.core.predictor.run_shap(explainer, input_df)
 
 # Sort and display as an interactive table and bar chart
 if impacts:
-    impact_df = pd.DataFrame(impacts).sort_values(by="Impact on Price (%)", key=abs, ascending=False)
+    impact_df = pd.DataFrame(impacts)
 
     col1, col2 = st.columns(2)
     with col1:
         st.dataframe(impact_df.head(8), hide_index=True)
     with col2:
         # Quick horizontal bar chart for visual impact
-        chart_data = impact_df.head(8).set_index("Feature")["Impact on Price (%)"]
+        chart_data = impact_df.head(8).set_index("feature")["impact_percentage"]
         st.bar_chart(chart_data, horizontal=True)
 else:
     st.info("The model indicates that base market trends are overriding individual feature impacts for this specific input.")

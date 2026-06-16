@@ -2,18 +2,18 @@
 *.csv
 *.xlsx
 *.db
-feature_store.db
 
 # Virtual Environments
-venv/
+.venv/
 .env
 
-# Models (Optional, see below)
+# Models
 *.cbm
 
 # Python cache and IDE files
 __pycache__/
 catboost_info/
+*.log
 .idea/
 .vscode/
 *.pyc

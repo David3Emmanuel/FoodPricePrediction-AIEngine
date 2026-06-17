@@ -22,6 +22,7 @@ class PredictionRequest(BaseModel):
     Vendor_Type: str | None = None
 
 COMMODITY_MAPPING = {
+    # Frontend aliases/IDs
     "tomatoes": {
         "Food_Item": "tomato",
         "Item_Type": "tomato",
@@ -68,6 +69,182 @@ COMMODITY_MAPPING = {
         "Food_Item": "eggs",
         "Item_Type": "agric",
         "Category": "12 pcs",
+        "Vendor_Type": "government"
+    },
+
+    # Standardized NBS mappings (all 29 items from data_frequency_audit.csv)
+    "beans-brown": {
+        "Food_Item": "beans",
+        "Item_Type": "brown",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "beans-white-black-eye": {
+        "Food_Item": "beans",
+        "Item_Type": "white black eye",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "beef-bone-in": {
+        "Food_Item": "beef",
+        "Item_Type": "bone in",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "beef-boneless": {
+        "Food_Item": "beef",
+        "Item_Type": "boneless",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "bread-sliced": {
+        "Food_Item": "bread",
+        "Item_Type": "sliced",
+        "Category": "1 loaf",
+        "Vendor_Type": "government"
+    },
+    "bread-unsliced": {
+        "Food_Item": "bread",
+        "Item_Type": "unsliced",
+        "Category": "1 loaf",
+        "Vendor_Type": "government"
+    },
+    "chicken-feet": {
+        "Food_Item": "chicken",
+        "Item_Type": "feet",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "chicken-frozen": {
+        "Food_Item": "chicken",
+        "Item_Type": "frozen",
+        "Category": "1 unit",
+        "Vendor_Type": "government"
+    },
+    "chicken-wings": {
+        "Food_Item": "chicken",
+        "Item_Type": "wings",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "eggs-agric-1pcs": {
+        "Food_Item": "eggs",
+        "Item_Type": "agric",
+        "Category": "1 pcs",
+        "Vendor_Type": "government"
+    },
+    "eggs-agric-12pcs": {
+        "Food_Item": "eggs",
+        "Item_Type": "agric",
+        "Category": "12 pcs",
+        "Vendor_Type": "government"
+    },
+    "fish-catfish-smoked": {
+        "Food_Item": "fish",
+        "Item_Type": "catfish smoked",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "fish-fish": {
+        "Food_Item": "fish",
+        "Item_Type": "fish",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "fish-mudfish": {
+        "Food_Item": "fish",
+        "Item_Type": "mudfish",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "garri-white": {
+        "Food_Item": "garri",
+        "Item_Type": "white",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "garri-yellow": {
+        "Food_Item": "garri",
+        "Item_Type": "yellow",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "milk-evaporated-tin": {
+        "Food_Item": "milk",
+        "Item_Type": "evaporated tin",
+        "Category": "1 unit",
+        "Vendor_Type": "government"
+    },
+    "oil-groundnut": {
+        "Food_Item": "oil",
+        "Item_Type": "groundnut",
+        "Category": "1000 ml",
+        "Vendor_Type": "government"
+    },
+    "oil-palm": {
+        "Food_Item": "oil",
+        "Item_Type": "palm",
+        "Category": "1000 ml",
+        "Vendor_Type": "government"
+    },
+    "oil-vegetable": {
+        "Food_Item": "oil",
+        "Item_Type": "vegetable",
+        "Category": "1000 ml",
+        "Vendor_Type": "government"
+    },
+    "potato-irish": {
+        "Food_Item": "potato",
+        "Item_Type": "irish",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "potato-sweet": {
+        "Food_Item": "potato",
+        "Item_Type": "sweet",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-agric": {
+        "Food_Item": "rice",
+        "Item_Type": "agric",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-imported": {
+        "Food_Item": "rice",
+        "Item_Type": "imported",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-local": {
+        "Food_Item": "rice",
+        "Item_Type": "local",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-medium-grained": {
+        "Food_Item": "rice",
+        "Item_Type": "medium grained",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-ofada": {
+        "Food_Item": "rice",
+        "Item_Type": "ofada",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "tomato-tomato": {
+        "Food_Item": "tomato",
+        "Item_Type": "tomato",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "yam-tuber": {
+        "Food_Item": "yam",
+        "Item_Type": "tuber",
+        "Category": "1000 g",
         "Vendor_Type": "government"
     }
 }

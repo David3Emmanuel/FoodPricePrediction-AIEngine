@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.idea
+.vscode
+.ipynb_checkpoints
+*.log
+feature_store_updates.log
+*.db-journal

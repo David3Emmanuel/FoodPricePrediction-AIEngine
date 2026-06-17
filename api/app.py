@@ -14,12 +14,82 @@ model, explainer = agri_price.core.predictor.load_model("models/agri_price_model
 # ==========================================
 # 2. DEFINE THE FRONTEND PAYLOAD & PIPELINE
 # ==========================================
-# The frontend only sends what the user clicked on the dashboard.
 class PredictionRequest(BaseModel):
-    Food_Item: str
-    Item_Type: str
-    Category: str
-    Vendor_Type: str
+    commodity_id: str | None = None
+    Food_Item: str | None = None
+    Item_Type: str | None = None
+    Category: str | None = None
+    Vendor_Type: str | None = None
+
+COMMODITY_MAPPING = {
+    "tomatoes": {
+        "Food_Item": "tomato",
+        "Item_Type": "tomato",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "rice-imported": {
+        "Food_Item": "rice",
+        "Item_Type": "imported",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "scotch-bonnet": {
+        "Food_Item": "tomato",
+        "Item_Type": "tomato",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "yam": {
+        "Food_Item": "yam",
+        "Item_Type": "tuber",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "white-garri": {
+        "Food_Item": "garri",
+        "Item_Type": "white",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "brown-beans": {
+        "Food_Item": "beans",
+        "Item_Type": "brown",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "onions": {
+        "Food_Item": "potato",
+        "Item_Type": "irish",
+        "Category": "1000 g",
+        "Vendor_Type": "government"
+    },
+    "eggs": {
+        "Food_Item": "eggs",
+        "Item_Type": "agric",
+        "Category": "12 pcs",
+        "Vendor_Type": "government"
+    }
+}
+
+def resolve_request_inputs(req: PredictionRequest):
+    if req.commodity_id:
+        normalized_id = req.commodity_id.lower().strip()
+        mapped = COMMODITY_MAPPING.get(normalized_id)
+        if not mapped:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unknown commodity_id: '{req.commodity_id}'. Supported: {list(COMMODITY_MAPPING.keys())}"
+            )
+        req.Food_Item = mapped["Food_Item"]
+        req.Item_Type = mapped["Item_Type"]
+        req.Category = mapped["Category"]
+        req.Vendor_Type = mapped["Vendor_Type"]
+    elif not all([req.Food_Item, req.Item_Type, req.Category, req.Vendor_Type]):
+        raise HTTPException(
+            status_code=400, 
+            detail="Must provide either 'commodity_id' or all four details ('Food_Item', 'Item_Type', 'Category', 'Vendor_Type')."
+        )
 
 def run_prediction_pipeline(req: PredictionRequest, df_context: pd.DataFrame):
     """
@@ -66,6 +136,7 @@ def run_prediction_pipeline(req: PredictionRequest, df_context: pd.DataFrame):
 @app.post("/predict")
 async def predict_price(req: PredictionRequest):
     try:
+        resolve_request_inputs(req)
         # Step A: Pull the "State of the World" from the local Feature Store
         try:
             conn = sqlite3.connect('data/feature_store.db')
@@ -82,6 +153,7 @@ async def predict_price(req: PredictionRequest):
         # Step F: Return the finalized JSON Payload to the Frontend
         return {
             "metadata": {
+                "commodity_id": req.commodity_id,
                 "Food_Item": req.Food_Item,
                 "Vendor_Type": req.Vendor_Type
             },
@@ -108,6 +180,7 @@ class SimulationRequest(PredictionRequest):
 @app.post("/simulate")
 async def simulate_price(req: SimulationRequest):
     try:
+        resolve_request_inputs(req)
         # Step A: Pull matching historical context from the feature store
         try:
             conn = sqlite3.connect('data/feature_store.db')
@@ -162,6 +235,7 @@ async def simulate_price(req: SimulationRequest):
         # Step F: Return the finalized JSON Payload to the Frontend
         return {
             "metadata": {
+                "commodity_id": req.commodity_id,
                 "Food_Item": req.Food_Item,
                 "Vendor_Type": req.Vendor_Type,
                 "Year": req.Year,

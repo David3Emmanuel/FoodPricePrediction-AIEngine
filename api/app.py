@@ -1,25 +1,21 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 import pandas as pd
 import sqlite3
 
 import agri_price.core.predictor
+from api.schemas import (
+    PredictionRequest,
+    PredictionResponse,
+    LivePricesResponse,
+    SimulationRequest,
+    SimulationResponse
+)
 
 # ==========================================
 # 1. INITIALIZE SERVER & LOAD AI INTO RAM
 # ==========================================
 app = FastAPI(title="AgriPrice Prediction API", version="1.0")
 model, explainer = agri_price.core.predictor.load_model("models/agri_price_model*.cbm")
-
-# ==========================================
-# 2. DEFINE THE FRONTEND PAYLOAD & PIPELINE
-# ==========================================
-class PredictionRequest(BaseModel):
-    commodity_id: str | None = None
-    Food_Item: str | None = None
-    Item_Type: str | None = None
-    Category: str | None = None
-    Vendor_Type: str | None = None
 
 COMMODITY_MAPPING = {
     # Frontend aliases/IDs
@@ -310,7 +306,7 @@ def run_prediction_pipeline(req: PredictionRequest, df_context: pd.DataFrame):
 # ==========================================
 # 3. THE PREDICTION ENDPOINT
 # ==========================================
-@app.post("/predict")
+@app.post("/predict", response_model=PredictionResponse)
 async def predict_price(req: PredictionRequest):
     try:
         resolve_request_inputs(req)
@@ -350,7 +346,7 @@ async def predict_price(req: PredictionRequest):
 # ==========================================
 # 3.5 THE LIVE PRICES ENDPOINT
 # ==========================================
-@app.get("/live")
+@app.get("/live", response_model=LivePricesResponse)
 async def get_live_prices():
     try:
         conn = sqlite3.connect('data/feature_store.db')
@@ -416,11 +412,8 @@ async def get_live_prices():
 # ==========================================
 # 4. THE SIMULATION ENDPOINT
 # ==========================================
-class SimulationRequest(PredictionRequest):
-    Year: int
-    Month: int
 
-@app.post("/simulate")
+@app.post("/simulate", response_model=SimulationResponse)
 async def simulate_price(req: SimulationRequest):
     try:
         resolve_request_inputs(req)

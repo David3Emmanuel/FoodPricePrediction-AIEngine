@@ -348,6 +348,72 @@ async def predict_price(req: PredictionRequest):
 
 
 # ==========================================
+# 3.5 THE LIVE PRICES ENDPOINT
+# ==========================================
+@app.get("/live")
+async def get_live_prices():
+    try:
+        conn = sqlite3.connect('data/feature_store.db')
+        query = """
+            SELECT State, Food_Item, Item_Type, Category, Vendor_Type, Price_NGN, Year, Week
+            FROM historical_data h1
+            WHERE (Year * 100 + Week) = (
+                SELECT MAX(h2.Year * 100 + h2.Week)
+                FROM historical_data h2
+                WHERE LOWER(h2.Food_Item) = LOWER(h1.Food_Item)
+                  AND LOWER(h2.Item_Type) = LOWER(h1.Item_Type)
+                  AND LOWER(h2.Category) = LOWER(h1.Category)
+                  AND LOWER(h2.Vendor_Type) = LOWER(h1.Vendor_Type)
+                  AND LOWER(h2.State) = LOWER(h1.State)
+            )
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+
+        if df.empty:
+            return {"status": "success", "count": 0, "prices": []}
+
+        results = []
+        for _, row in df.iterrows():
+            food_item = str(row["Food_Item"])
+            item_type = str(row["Item_Type"])
+            category = str(row["Category"])
+            vendor_type = str(row["Vendor_Type"])
+            
+            # Match against COMMODITY_MAPPING to find the matching commodity_id key
+            commodity_id = None
+            for cid, mapped in COMMODITY_MAPPING.items():
+                if (
+                    mapped["Food_Item"].lower() == food_item.lower()
+                    and mapped["Item_Type"].lower() == item_type.lower()
+                    and mapped["Category"].lower() == category.lower()
+                    and mapped["Vendor_Type"].lower() == vendor_type.lower()
+                ):
+                    commodity_id = cid
+                    break
+            
+            results.append({
+                "commodity_id": commodity_id,
+                "Food_Item": food_item,
+                "Item_Type": item_type,
+                "Category": category,
+                "Vendor_Type": vendor_type,
+                "State": str(row["State"]),
+                "Price_NGN": float(row["Price_NGN"]),
+                "Year": int(row["Year"]),
+                "Week": int(row["Week"])
+            })
+
+        return {
+            "status": "success",
+            "count": len(results),
+            "prices": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==========================================
 # 4. THE SIMULATION ENDPOINT
 # ==========================================
 class SimulationRequest(PredictionRequest):
